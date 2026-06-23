@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>超级无敌喜欢你</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #1e1e2f, #2d1b3d);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: "微软雅黑", sans-serif;
+            user-select: none;
+        }
+
+        /* ===== 飘落的爱心背景 ===== */
+        .hearts span {
+            position: fixed;
+            color: #ff6b81;
+            font-size: 24px;
+            animation: fall linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ===== 主卡片 ===== */
+        .card {
+            position: relative;
+            z-index: 10;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            padding: 50px 60px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transition: 0.3s;
+            max-width: 90vw;
+        }
+        .card h1 { color: #fff; font-size: 42px; text-shadow: 0 0 20px #ff4757; }
+        .card p { color: #dfe6e9; font-size: 22px; margin: 20px 0 30px; }
+        .btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 30px #ff4757;
+            font-weight: bold;
+            margin: 6px;
+        }
+        .btn:hover {
+            transform: scale(1.08);
+            background: #ff6b81;
+            box-shadow: 0 0 50px #ff6b81;
+        }
+        .btn-game {
+            background: #a29bfe;
+            box-shadow: 0 0 30px #6c5ce7;
+        }
+        .btn-game:hover {
+            background: #6c5ce7;
+            box-shadow: 0 0 50px #6c5ce7;
+        }
+
+        /* ===== 秘密页面 ===== */
+        #secretPage {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #ff9a9e, #fecfef);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-family: "楷体", serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #secretPage h1 { color: #c0392b; font-size: 50px; }
+        #secretPage p { color: #2c3e50; font-size: 28px; }
+
+        /* ===== 密码锁 ===== */
+        #lockScreen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+        #lockScreen h1 { color: #fff; font-size: 26px; margin-bottom: 10px; }
+        #lockScreen p.hint { color: #aaa; font-size: 16px; margin-bottom: 20px; }
+        #lockScreen input {
+            padding: 15px 30px;
+            font-size: 24px;
+            border-radius: 50px;
+            border: 0;
+            text-align: center;
+            width: 200px;
+            outline: none;
+            background: #fff;
+        }
+        #lockScreen .unlock-btn {
+            margin-top: 15px;
+            padding: 15px 50px;
+            font-size: 24px;
+            border-radius: 50px;
+            border: 0;
+            background: #ff4757;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 20px #ff4757;
+        }
+        #errMsg { color: #ff4757; margin-top: 15px; display: none; font-size: 18px; }
+
+        /* ===== 游戏区域 ===== */
+        #gameArea {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(20, 10, 30, 0.96);
+            z-index: 50;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #gameHeader {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 22px;
+            z-index: 60;
+            pointer-events: none;
+        }
+        #gameHeader span { background: rgba(0,0,0,0.4); padding: 8px 20px; border-radius: 30px; backdrop-filter: blur(4px); }
+        #gameHeader .exit-btn {
+            pointer-events: auto;
+            background: #ff4757;
+            border: none;
+            color: white;
+            padding: 8px 25px;
+            border-radius: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #gameCanvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            cursor: none;
+        }
+        /* 底部篮子 */
+        #basket {
+            position: absolute;
+            bottom: 30px;
+            font-size: 60px;
+            transform: translateX(-50%);
+            pointer-events: none;
+            filter: drop-shadow(0 0 20px #ff6b81);
+            transition: left 0.05s linear;
+            z-index: 55;
+            line-height: 1;
+            width: 80px;
+            text-align: center;
+        }
+        /* 掉落的爱心 */
+        .falling-heart {
+            position: absolute;
+            top: -60px;
+            font-size: 40px;
+            pointer-events: none;
+            z-index: 52;
+            text-shadow: 0 0 15px #ff4757;
+            line-height: 1;
+        }
+        /* 游戏结束遮罩 */
+        #gameOverlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 70;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(6px);
+        }
+        #gameOverlay h1 { color: #fff; font-size: 48px; margin-bottom: 10px; }
+        #gameOverlay p { color: #ffd93d; font-size: 32px; margin-bottom: 30px; }
+        #gameOverlay .btn { margin: 6px; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .card { padding: 30px 20px; }
+            .card h1 { font-size: 30px; }
+            .card p { font-size: 18px; }
+            .btn { font-size: 18px; padding: 12px 25px; }
+            #secretPage h1 { font-size: 32px; }
+            #secretPage p { font-size: 20px; }
+            #basket { font-size: 48px; width: 60px; bottom: 20px; }
+            .falling-heart { font-size: 32px; }
+            #gameHeader { font-size: 16px; padding: 0 15px; }
+            #gameHeader span { padding: 4px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 🔒 密码锁 ===== -->
+    <div id="lockScreen">
+        <h1>🔒 输入我的专属密码</h1>
+        <p class="hint">提示：输入你的生日（月日，比如 0520）</p>
+        <input type="password" id="pwdInput" placeholder="请输入4位密码" maxlength="4">
+        <button class="unlock-btn" onclick="unlock()">解锁</button>
+        <p id="errMsg">❌ 密码不对哦，再想想~</p>
+    </div>
+
+    <!-- ===== 🎵 背景音乐 ===== -->
+    <!-- ★★★ 把 '你的音乐.mp3' 改成你的音乐文件名或链接 ★★★ -->
+    <audio id="bgmMusic" src="qingning.ogg" loop preload="auto"></audio>
+
+    <!-- ===== 💕 飘落爱心 ===== -->
+    <div class="hearts" id="heartsContainer"></div>
+
+    <!-- ===== 💌 主卡片 ===== -->
+    <div class="card" id="mainCard">
+        <h1>❤️ 我喜欢你 ❤️</h1>
+        <p>周涵，做我女朋友好吗？</p>
+        <button class="btn" onclick="sayYes()">当然啦！点击我！</button>
+        <br>
+        <button class="btn btn-game" onclick="startGame()">🎮 先玩个小游戏</button>
+    </div>
+
+    <!-- ===== 🎉 秘密页面 ===== -->
+    <div id="secretPage">
+        <h1>🎉 我就知道你会答应的！ 🎉</h1>
+        <p>我会一直一直对你好 ❤️</p>
+        <p style="font-size:24px; margin-top:20px;">—— 来自彬彬</p>
+        <button class="btn" onclick="location.reload()" style="margin-top:30px;">再看一遍</button>
+    </div>
+
+    <!-- ===== 🎮 游戏区域 ===== -->
+    <div id="gameArea">
+        <div id="gameHeader">
+            <span>❤️ 得分: <span id="scoreDisplay">0</span></span>
+            <span>💔 生命: <span id="livesDisplay">3</span></span>
+            <button class="exit-btn" onclick="exitGame()">✕ 退出</button>
+        </div>
+        <div id="gameCanvas">
+            <div id="basket">💖</div>
+            <div id="gameOverlay">
+                <h1>⏰ 游戏结束</h1>
+                <p>你接住了 <span id="finalScore">0</span> 颗爱心！</p>
+                <button class="btn" onclick="resetGame()">🔄 再来一次</button>
+                <button class="btn btn-game" onclick="exitGame()">💌 返回表白</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // 1. 背景飘落爱心 (保持不变)
+        // =====================================================
+        const container = document.getElementById('heartsContainer');
+        for (let i = 0; i < 30; i++) {
+            const heart = document.createElement('span');
+            heart.innerHTML = ['❤️','💕','💗','✨'][Math.floor(Math.random()*4)];
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
+            heart.style.animationDuration = (Math.random() * 8 + 6) + 's';
+            heart.style.animationDelay = (Math.random() * 10) + 's';
+            container.appendChild(heart);
+        }
+
+        // =====================================================
+        // 2. 密码解锁
+        // =====================================================
+        function unlock() {
+            var input = document.getElementById('pwdInput').value;
+            // ★★★ 把 '0520' 改成 TA 的生日（比如 '1111'） ★★★
+            if (input === '0321') {
+                document.getElementById('lockScreen').style.display = 'none';
+                var bgm = document.getElementById('bgmMusic');
+                if(bgm) { bgm.play().catch(function(e){}); }
+            } else {
+                var err = document.getElementById('errMsg');
+                err.style.display = 'block';
+                setTimeout(function(){ err.style.display = 'none'; }, 2000);
+            }
+        }
+        document.getElementById('pwdInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') unlock();
+        });
+
+        // =====================================================
+        // 3. 表白按钮
+        // =====================================================
+        function sayYes() {
+            document.getElementById('mainCard').style.display = 'none';
+            document.getElementById('secretPage').style.display = 'flex';
+        }
+
+        // =====================================================
+        // 4. 🎮 接爱心小游戏
+        // =====================================================
+        const gameArea = document.getElementById('gameArea');
+        const gameCanvas = document.getElementById('gameCanvas');
+        const basket = document.getElementById('basket');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const livesDisplay = document.getElementById('livesDisplay');
+        const finalScore = document.getElementById('finalScore');
+        const gameOverlay = document.getElementById('gameOverlay');
+
+        let score = 0;
+        let lives = 3;
+        let gameActive = false;
+        let animationId = null;
+        let spawnInterval = null;
+        let fallingHearts = [];
+        let basketX = window.innerWidth / 2; // 初始居中
+
+        // 初始化篮子位置
+        function updateBasketPosition() {
+            const canvasWidth = gameCanvas.clientWidth;
+            // 限制篮子不超出左右边界 (篮子宽度约80px)
+            const maxX = canvasWidth - 40; 
+            const minX = 40;
+            if (basketX < minX) basketX = minX;
+            if (basketX > maxX) basketX = maxX;
+            basket.style.left = basketX + 'px';
+        }
+
+        // 生成一颗爱心
+        function spawnHeart() {
+            if (!gameActive) return;
+            const canvasWidth = gameCanvas.clientWidth;
+            const heart = document.createElement('div');
+            heart.className = 'falling-heart';
+            heart.innerHTML = ['❤️', '🧡', '💖', '💗'][Math.floor(Math.random() * 4)];
+            const size = 30 + Math.random() * 30;
+            heart.style.fontSize = size + 'px';
+            const x = 20 + Math.random() * (canvasWidth - 60);
+            heart.style.left = x + 'px';
+            heart.style.top = '-60px';
+            heart.dataset.x = x;
+            heart.dataset.y = -60;
+            heart.dataset.speed = 1.5 + Math.random() * 2.5; // 下落速度
+            heart.dataset.size = size;
+            gameCanvas.appendChild(heart);
+            fallingHearts.push(heart);
+        }
+
+        // 游戏主循环 (更新位置 & 碰撞检测)
+        function gameLoop() {
+            if (!gameActive) return;
+
+            const canvasHeight = gameCanvas.clientHeight;
+            const basketRect = basket.getBoundingClientRect();
+            const canvasRect = gameCanvas.getBoundingClientRect();
+            
+            // 篮子中心X (相对于canvas)
+            const basketCenterX = basketX;
+            // 篮子碰撞半径 (约40px)
+            const basketRadius = 45; 
+
+            // 需要移除的爱心
+            const toRemove = [];
+
+            for (let i = 0; i < fallingHearts.length; i++) {
+                const heart = fallingHearts[i];
+                let y = parseFloat(heart.dataset.y) || 0;
+                y += heart.dataset.speed;
+                heart.dataset.y = y;
+                heart.style.top = y + 'px';
+
+                const heartX = parseFloat(heart.dataset.x);
+                const heartSize = parseFloat(heart.dataset.size);
+
+                // 碰撞检测：爱心是否进入篮子区域
+                const heartCenterX = heartX + heartSize/2;
+                const heartCenterY = y + heartSize/2;
+                
+                // 篮子底部在 canvas 中的 y 坐标 (固定)
+                const basketY = canvasHeight - 30 - 30; // 底部30px + 篮子高度一半
+
+                const dx = heartCenterX - basketCenterX;
+                const dy = heartCenterY - basketY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                // 如果爱心掉到屏幕底部以下
+                if (y > canvasHeight + 50) {
+                    toRemove.push(heart);
+                    lives--;
+                    livesDisplay.textContent = lives;
+                    if (lives <= 0) {
+                        lives = 0;
+                        livesDisplay.textContent = '0';
+                        endGame();
+                        return;
+                    }
+                    continue;
+                }
+
+                // 碰撞检测 (距离小于阈值)
+                if (dist < basketRadius + heartSize/2 - 5) {
+                    // 接住了！
+                    toRemove.push(heart);
+                    score++;
+                    scoreDisplay.textContent = score;
+                    // 小反馈：闪烁一下篮子
+                    basket.style.transform = 'translateX(-50%) scale(1.3)';
+                    setTimeout(() => {
+                        if (basket) basket.style.transform = 'translateX(-50%) scale(1)';
+                    }, 100);
+                }
+            }
+
+            // 移除爱心 (从DOM和数组)
+            for (const heart of toRemove) {
+                if (heart.parentNode) heart.parentNode.removeChild(heart);
+                const index = fallingHearts.indexOf(heart);
+                if (index > -1) fallingHearts.splice(index, 1);
+            }
+
+            // 继续下一帧
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // 结束游戏
+        function endGame() {
+            gameActive = false;
+            if (spawnInterval) clearInterval(spawnInterval);
+            if (animationId) cancelAnimationFrame(animationId);
+            finalScore.textContent = score;
+            gameOverlay.style.display = 'flex';
+        }
+
+        // 重置游戏
+        function resetGame() {
+            // 清除所有爱心
+            for (const heart of fallingHearts) {
+                if (heart.parentNode) heart.parentNode.removeChild(heart);
+            }
+            fallingHearts = [];
+            gameOverlay.style.display = 'none';
+            score = 0;
+            lives = 3;
+            scoreDisplay.textContent = '0';
+            livesDisplay.textContent = '3';
+            gameActive = true;
+            if (spawnInterval) clearInterval(spawnInterval);
+            spawnInterval = setInterval(spawnHeart, 600);
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        // 开始游戏
+        function startGame() {
+            document.getElementById('mainCard').style.display = 'none';
+            gameArea.style.display = 'flex';
+            // 重置游戏状态
+            resetGame();
+            // 重置篮子位置
+            basketX = window.innerWidth / 2;
+            updateBasketPosition();
+        }
+
+        // 退出游戏 (返回卡片)
+        function exitGame() {
+            gameActive = false;
+            if (spawnInterval) clearInterval(spawnInterval);
+            if (animationId) cancelAnimationFrame(animationId);
+            // 清除所有爱心
+            for (const heart of fallingHearts) {
+                if (heart.parentNode) heart.parentNode.removeChild(heart);
+            }
+            fallingHearts = [];
+            gameOverlay.style.display = 'none';
+            gameArea.style.display = 'none';
+            document.getElementById('mainCard').style.display = 'block';
+            // 重置分数和生命显示，方便下次进入
+            score = 0;
+            lives = 3;
+            scoreDisplay.textContent = '0';
+            livesDisplay.textContent = '3';
+        }
+
+        // ===== 鼠标/触摸控制篮子 =====
+        function handleMove(e) {
+            if (!gameActive) return;
+            const canvasRect = gameCanvas.getBoundingClientRect();
+            let clientX = e.clientX;
+            if (!clientX && e.touches) {
+                clientX = e.touches[0].clientX;
+            }
+            if (clientX !== undefined) {
+                // 计算相对 canvas 的 X 坐标
+                let x = clientX - canvasRect.left;
+                // 限制范围 (考虑篮子宽度)
+                const maxX = canvasRect.width - 40;
+                const minX = 40;
+                if (x < minX) x = minX;
+                if (x > maxX) x = maxX;
+                basketX = x;
+                basket.style.left = x + 'px';
+            }
+        }
+
+        gameCanvas.addEventListener('mousemove', handleMove);
+        gameCanvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            handleMove(e);
+        }, { passive: false });
+
+        // 窗口大小变化时重新调整篮子位置
+        window.addEventListener('resize', function() {
+            if (gameActive) {
+                basketX = Math.min(basketX, gameCanvas.clientWidth - 40);
+                basketX = Math.max(basketX, 40);
+                basket.style.left = basketX + 'px';
+            }
+        });
+
+        // 防止在游戏区域右键菜单
+        gameCanvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+        console.log('%c ❤️ 游戏已加载，祝你表白成功！❤️ ', 'background: #ff4757; color: #fff; font-size: 18px; padding: 10px;');
+    </script>
+</body>
+</html>
